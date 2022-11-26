@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { UserRepository } from '../user/repositories/user.repository'
-import { AuthDto } from './dto/auth.dto'
 import { UserRole } from '@nest-microservices/interfaces'
 import { UserEntity } from '../user/entities/user.entity'
 import { JwtService } from '@nestjs/jwt'
+import { RegisterDto } from './dto/register.dto'
 
 @Injectable()
 export class AuthService {
@@ -12,7 +12,7 @@ export class AuthService {
     private readonly jwtService: JwtService
   ) {}
 
-  async register({ displayName, password, email }: AuthDto) {
+  async register({ displayName, password, email }: RegisterDto) {
     const oldUser = await this.userRepository.findUser(email)
     if (oldUser) {
       throw new BadRequestException('User with this email already exists!')
