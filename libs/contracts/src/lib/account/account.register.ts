@@ -4,6 +4,7 @@ export namespace AccountRegister {
   export class Request {
     email: string
     password: string
+    displayName?: string
   }
 
   export class Response {
