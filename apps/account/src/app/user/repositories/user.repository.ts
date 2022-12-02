@@ -17,6 +17,10 @@ export class UserRepository {
     return this.userModel.findOne({ email }).exec()
   }
 
+  async findUserById(id: string) {
+    return this.userModel.findById(id).select(['-passwordHash']).exec()
+  }
+
   async deleteUser(email: string) {
     return this.userModel.deleteOne({ email })
   }
