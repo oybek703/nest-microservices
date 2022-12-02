@@ -17,6 +17,10 @@ export class UserRepository {
     return this.userModel.findOne({ email }).exec()
   }
 
+  async updateUser({ _id, ...rest }: UserEntity) {
+    return this.userModel.updateOne({ _id }, { $set: { ...rest } }).exec()
+  }
+
   async findUserById(id: string) {
     return this.userModel.findById(id).select(['-passwordHash']).exec()
   }
