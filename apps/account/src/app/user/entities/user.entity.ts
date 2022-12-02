@@ -1,5 +1,6 @@
-import { IUser, IUserCourses, UserRole } from '@nest-microservices/interfaces'
+import { IUser, IUserCourses, PurchaseState, UserRole } from '@nest-microservices/interfaces'
 import { compare, genSalt, hash } from 'bcryptjs'
+import { BadRequestException } from '@nestjs/common'
 
 export class UserEntity implements IUser {
   _id: string
@@ -16,6 +17,27 @@ export class UserEntity implements IUser {
     this.email = user.email
     this.role = user.role
     this.courses = user.courses
+  }
+
+  public addCourse(courseId: string) {
+    const existingCourse = this.courses.find(({ _id }) => _id === courseId)
+    if (existingCourse) {
+      throw new BadRequestException('Course already added!')
+    }
+    this.courses.push({ courseId, purchaseState: PurchaseState.Started })
+  }
+
+  public deleteCourse(courseId: string) {
+    this.courses = this.courses.filter(({ _id }) => _id !== courseId)
+  }
+
+  public updateCourseState(courseId: string, state: PurchaseState) {
+    this.courses = this.courses.map((course) => {
+      if (course._id === courseId) {
+        course.purchaseState = state
+      }
+      return course
+    })
   }
 
   public getPublicProfile() {
