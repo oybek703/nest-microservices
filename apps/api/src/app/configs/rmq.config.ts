@@ -12,7 +12,6 @@ export const getRMQConfig = (): IRMQServiceAsyncOptions => {
           host: configService.get('AMQP_HOST') ?? ''
         }
       ],
-      queueName: configService.get('AMQP_QUEUE') ?? '',
       prefetchCount: 32,
       serviceName: 'nest-microservices'
     }),

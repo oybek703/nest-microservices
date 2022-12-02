@@ -12,8 +12,8 @@ import { PassportModule } from '@nestjs/passport'
     ConfigModule.forRoot({ envFilePath: 'envs/.api.env', isGlobal: true }),
     RMQModule.forRootAsync(getRMQConfig()),
     JwtModule.registerAsync(getJWTConfig()),
-    PassportModule,
-    AuthController
-  ]
+    PassportModule
+  ],
+  controllers: [AuthController]
 })
 export class AppModule {}
