@@ -2,6 +2,7 @@ import { BuyCourseSageState } from './buy-course.state'
 import { UserEntity } from '../entities/user.entity'
 import { CourseGetCourse, PaymentGenerateLink } from '@nest-microservices/contracts'
 import { PurchaseState } from '@nest-microservices/interfaces'
+import { PaymentCheck } from '../../../../../../libs/contracts/src/lib/payment/payment.check'
 
 export class BuyCourseStepsSagaStateStarted extends BuyCourseSageState {
   cancel(): Promise<{ user: UserEntity }> {
@@ -35,5 +36,20 @@ export class BuyCourseStepsSagaStateStarted extends BuyCourseSageState {
     })
     this.saga.setState(PurchaseState.WaitingForPayment, course._id)
     return Promise.resolve({ paymentLink, user: this.saga.user })
+  }
+}
+
+export class BuCourseSagaStateInProcess extends BuyCourseSageState {
+  cancel(): Promise<{ user: UserEntity }> {
+    this.saga.setState(PurchaseState.Cancelled, this.saga.courseId)
+    return Promise.resolve({ user: this.saga.user })
+  }
+
+  async checkPayment(): Promise<{ user: UserEntity }> {
+    return Promise.resolve({ user: undefined })
+  }
+
+  pay(): Promise<{ paymentLink: string; user: UserEntity }> {
+    return Promise.resolve({ paymentLink: '', user: undefined })
   }
 }
