@@ -4,9 +4,11 @@ import { User, userSchema } from './models/user.model'
 import { UserRepository } from './repositories/user.repository'
 import { UserCommands } from './user.commands'
 import { UserQueries } from './user.queries'
+import { UserService } from './user.service'
+import { UserEventEmitter } from './user.event-emitter'
 
 @Module({
-  providers: [UserRepository],
+  providers: [UserRepository, UserService, UserEventEmitter],
   imports: [MongooseModule.forFeature([{ name: User.name, schema: userSchema }])],
   exports: [UserRepository],
   controllers: [UserCommands, UserQueries]

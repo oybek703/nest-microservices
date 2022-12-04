@@ -1,6 +1,12 @@
-import { IUser, IUserCourses, PurchaseState, UserRole } from '@nest-microservices/interfaces'
+import {
+  IDomainEvent,
+  IUser,
+  IUserCourses,
+  PurchaseState,
+  UserRole
+} from '@nest-microservices/interfaces'
 import { compare, genSalt, hash } from 'bcryptjs'
-import { BadRequestException } from '@nestjs/common'
+import { AccountChangedCourse } from '@nest-microservices/contracts'
 
 export class UserEntity implements IUser {
   _id: string
@@ -9,6 +15,7 @@ export class UserEntity implements IUser {
   passwordHash: string
   role: UserRole
   courses?: IUserCourses[]
+  events: IDomainEvent[] = []
 
   constructor(user: IUser) {
     this._id = user._id
@@ -19,25 +26,27 @@ export class UserEntity implements IUser {
     this.courses = user.courses
   }
 
-  public addCourse(courseId: string) {
+  public setCourseState(courseId: string, state: PurchaseState) {
     const existingCourse = this.courses.find(({ _id }) => _id === courseId)
-    if (existingCourse) {
-      throw new BadRequestException('Course already added!')
+    if (!existingCourse) {
+      this.courses.push({ courseId, purchaseState: PurchaseState.Started })
+      return this
     }
-    this.courses.push({ courseId, purchaseState: PurchaseState.Started })
-  }
-
-  public deleteCourse(courseId: string) {
-    this.courses = this.courses.filter(({ _id }) => _id !== courseId)
-  }
-
-  public updateCourseState(courseId: string, state: PurchaseState) {
+    if (state === PurchaseState.Cancelled) {
+      this.courses = this.courses.filter(({ _id }) => _id !== courseId)
+      return this
+    }
     this.courses = this.courses.map((course) => {
       if (course._id === courseId) {
         course.purchaseState = state
       }
       return course
     })
+    this.events.push({
+      topic: AccountChangedCourse.topic,
+      data: { userId: this._id, courseId, state }
+    })
+    return this
   }
 
   public getPublicProfile() {

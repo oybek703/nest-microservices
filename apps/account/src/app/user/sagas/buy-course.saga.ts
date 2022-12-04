@@ -30,7 +30,7 @@ export class BuyCourseSaga {
         break
     }
     this.state.setContext(this)
-    this.user.updateCourseState(courseId, state)
+    this.user.setCourseState(courseId, state)
   }
 
   getState() {
