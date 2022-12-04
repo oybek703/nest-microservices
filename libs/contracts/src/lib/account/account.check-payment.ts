@@ -1,5 +1,5 @@
 import { IsString } from 'class-validator'
-import { PurchaseState } from '@nest-microservices/interfaces'
+import { PaymentStatus } from '../payment/payment.check'
 
 export namespace AccountCheckPayment {
   export const topic = 'account.buy-course.command'
@@ -13,6 +13,6 @@ export namespace AccountCheckPayment {
   }
 
   export class Response {
-    state: PurchaseState
+    status: PaymentStatus
   }
 }
