@@ -2,7 +2,7 @@ import { BuyCourseSageState } from './buy-course.state'
 import { UserEntity } from '../entities/user.entity'
 import { CourseGetCourse, PaymentGenerateLink } from '@nest-microservices/contracts'
 import { PurchaseState } from '@nest-microservices/interfaces'
-import { PaymentCheck } from '../../../../../../libs/contracts/src/lib/payment/payment.check'
+import { PaymentCheck } from '@nest-microservices/contracts'
 
 export class BuyCourseStepsSagaStateStarted extends BuyCourseSageState {
   cancel(): Promise<{ user: UserEntity }> {
@@ -39,17 +39,57 @@ export class BuyCourseStepsSagaStateStarted extends BuyCourseSageState {
   }
 }
 
-export class BuCourseSagaStateInProcess extends BuyCourseSageState {
+export class BuCourseSagaStateWaitingForPayment extends BuyCourseSageState {
   cancel(): Promise<{ user: UserEntity }> {
-    this.saga.setState(PurchaseState.Cancelled, this.saga.courseId)
-    return Promise.resolve({ user: this.saga.user })
+    throw new Error('Cannot cancel payment which is in process!')
   }
 
   async checkPayment(): Promise<{ user: UserEntity }> {
-    return Promise.resolve({ user: undefined })
+    const { status } = await this.saga.rmqService.send<PaymentCheck.Request, PaymentCheck.Response>(
+      PaymentCheck.topic,
+      { courseId: this.saga.courseId, userId: this.saga.user._id }
+    )
+    if (status === 'cancelled') {
+      this.saga.setState(PurchaseState.Cancelled, this.saga.courseId)
+      return { user: this.saga.user }
+    }
+    if (status !== 'success') {
+      return { user: this.saga.user }
+    }
+    this.saga.setState(PurchaseState.Purchased, this.saga.courseId)
+    return Promise.resolve({ user: this.saga.user })
   }
 
   pay(): Promise<{ paymentLink: string; user: UserEntity }> {
-    return Promise.resolve({ paymentLink: '', user: undefined })
+    throw new Error('Cannot generate link for payment which is in process!')
+  }
+}
+
+export class BuCourseSagaStatePurchased extends BuyCourseSageState {
+  cancel(): Promise<{ user: UserEntity }> {
+    throw new Error('Cannot cancel payed course!')
+  }
+
+  checkPayment(): Promise<{ user: UserEntity }> {
+    throw new Error('Cannot check payment for payed course!')
+  }
+
+  pay(): Promise<{ paymentLink: string; user: UserEntity }> {
+    throw new Error('Cannot pay again for payed course!')
+  }
+}
+
+export class BuCourseSagaStateCanceled extends BuyCourseSageState {
+  cancel(): Promise<{ user: UserEntity }> {
+    throw new Error('Cannot cancel payment for payment cancelled course!')
+  }
+
+  checkPayment(): Promise<{ user: UserEntity }> {
+    throw new Error('Cannot check payment for payment cancelled course!')
+  }
+
+  pay(): Promise<{ paymentLink: string; user: UserEntity }> {
+    this.saga.setState(PurchaseState.Started, this.saga.courseId)
+    return this.saga.getState().pay()
   }
 }
