@@ -13,6 +13,6 @@ export class UserController {
 
   @Cron('*/5 * * * * *')
   async cron() {
-    Logger.log('Done')
+    Logger.log(Date.now())
   }
 }
