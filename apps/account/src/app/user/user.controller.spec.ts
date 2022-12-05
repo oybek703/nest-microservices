@@ -1,4 +1,13 @@
-import { AccountLogin, AccountRegister, AccountUserInfo } from '@nest-microservices/contracts'
+import {
+  AccountBuyCourse,
+  AccountCheckPayment,
+  AccountLogin,
+  AccountRegister,
+  AccountUserInfo,
+  CourseGetCourse,
+  PaymentCheck,
+  PaymentGenerateLink
+} from '@nest-microservices/contracts'
 import { INestApplication } from '@nestjs/common'
 import { RMQModule, RMQService, RMQTestService } from 'nestjs-rmq'
 import { Test, TestingModule } from '@nestjs/testing'
@@ -11,7 +20,7 @@ import { UserModule } from './user.module'
 import { verify } from 'jsonwebtoken'
 
 const authLogin: AccountLogin.Request = {
-  email: 'temp@gmail.com',
+  email: 'temp-user@gmail.com',
   password: '1'
 }
 
@@ -19,6 +28,8 @@ const authRegister: AccountRegister.Request = {
   ...authLogin,
   displayName: 'Tester'
 }
+
+const courseId = 'courseId'
 
 describe('UserController', function () {
   let app: INestApplication
@@ -62,6 +73,36 @@ describe('UserController', function () {
       { id: userId }
     )
     expect(res.profile.displayName).toEqual(authRegister.displayName)
+  })
+
+  // TODO here failed test
+  it('should buy course', async function () {
+    const paymentLink = 'paymentLink'
+    rmqService.mockReply<CourseGetCourse.Response>(CourseGetCourse.topic, {
+      course: { _id: courseId, price: 1000 }
+    })
+    rmqService.mockReply<PaymentGenerateLink.Response>(PaymentGenerateLink.topic, { paymentLink })
+    const res = await rmqService.triggerRoute<AccountBuyCourse.Request, AccountBuyCourse.Response>(
+      AccountBuyCourse.topic,
+      { courseId, userId }
+    )
+    expect(res.paymentLink).toEqual(paymentLink)
+    await expect(
+      rmqService.triggerRoute<AccountBuyCourse.Request, AccountBuyCourse.Response>(
+        AccountBuyCourse.topic,
+        { courseId, userId }
+      )
+    ).rejects.toThrowError()
+  })
+
+  // TODO here failed test
+  it('should check payment', async function () {
+    rmqService.mockReply<PaymentCheck.Response>(PaymentCheck.topic, { status: 'success' })
+    const res = await rmqService.triggerRoute<
+      AccountCheckPayment.Request,
+      AccountCheckPayment.Response
+    >(AccountCheckPayment.topic, { courseId, userId })
+    expect(res.status).toEqual('success')
   })
 
   afterAll(async function () {

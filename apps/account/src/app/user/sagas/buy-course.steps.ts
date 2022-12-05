@@ -4,7 +4,7 @@ import { CourseGetCourse, PaymentGenerateLink, PaymentStatus } from '@nest-micro
 import { PurchaseState } from '@nest-microservices/interfaces'
 import { PaymentCheck } from '@nest-microservices/contracts'
 
-export class BuyCourseStepsSagaStateStarted extends BuyCourseSageState {
+export class BuyCourseSagaStateStarted extends BuyCourseSageState {
   cancel(): Promise<{ user: UserEntity }> {
     this.saga.setState(PurchaseState.Cancelled, this.saga.courseId)
     return Promise.resolve({ user: this.saga.user })
@@ -53,7 +53,7 @@ export class BuCourseSagaStateWaitingForPayment extends BuyCourseSageState {
       this.saga.setState(PurchaseState.Cancelled, this.saga.courseId)
       return { user: this.saga.user, status: 'cancelled' }
     }
-    if (status !== 'success') {
+    if (status === 'success') {
       return { user: this.saga.user, status: 'success' }
     }
     this.saga.setState(PurchaseState.Purchased, this.saga.courseId)
@@ -79,7 +79,7 @@ export class BuCourseSagaStatePurchased extends BuyCourseSageState {
   }
 }
 
-export class BuCourseSagaStateCanceled extends BuyCourseSageState {
+export class BuyCourseSagaStateCanceled extends BuyCourseSageState {
   cancel(): Promise<{ user: UserEntity }> {
     throw new Error('Cannot cancel payment for payment cancelled course!')
   }

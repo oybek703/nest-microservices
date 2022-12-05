@@ -3,21 +3,23 @@ import { RMQService } from 'nestjs-rmq'
 import { PurchaseState } from '@nest-microservices/interfaces'
 import { BuyCourseSageState } from './buy-course.state'
 import {
-  BuCourseSagaStateCanceled,
+  BuyCourseSagaStateCanceled,
   BuCourseSagaStatePurchased,
   BuCourseSagaStateWaitingForPayment,
-  BuyCourseStepsSagaStateStarted
+  BuyCourseSagaStateStarted
 } from './buy-course.steps'
 
 export class BuyCourseSaga {
   private state: BuyCourseSageState
 
-  constructor(public user: UserEntity, public courseId: string, public rmqService: RMQService) {}
+  constructor(public user: UserEntity, public courseId: string, public rmqService: RMQService) {
+    this.setState(user.getCourseState(courseId), courseId)
+  }
 
   setState(state: PurchaseState, courseId: string) {
     switch (state) {
       case PurchaseState.Started:
-        this.state = new BuyCourseStepsSagaStateStarted()
+        this.state = new BuyCourseSagaStateStarted()
         break
       case PurchaseState.WaitingForPayment:
         this.state = new BuCourseSagaStateWaitingForPayment()
@@ -26,7 +28,7 @@ export class BuyCourseSaga {
         this.state = new BuCourseSagaStatePurchased()
         break
       case PurchaseState.Cancelled:
-        this.state = new BuCourseSagaStateCanceled()
+        this.state = new BuyCourseSagaStateCanceled()
         break
     }
     this.state.setContext(this)

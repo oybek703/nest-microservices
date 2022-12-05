@@ -26,14 +26,21 @@ export class UserEntity implements IUser {
     this.courses = user.courses
   }
 
+  public getCourseState(courseId: string): PurchaseState {
+    return (
+      this.courses.find((course) => course.courseId === courseId)?.purchaseState ??
+      PurchaseState.Started
+    )
+  }
+
   public setCourseState(courseId: string, state: PurchaseState) {
-    const existingCourse = this.courses.find(({ courseId }) => courseId === courseId)
+    const existingCourse = this.courses.find((course) => course.courseId === courseId)
     if (!existingCourse) {
-      this.courses.push({ courseId, purchaseState: PurchaseState.Started })
+      this.courses.push({ courseId, purchaseState: state })
       return this
     }
     if (state === PurchaseState.Cancelled) {
-      this.courses = this.courses.filter(({ courseId: cID }) => cID !== courseId)
+      this.courses = this.courses.filter((course) => course.courseId !== courseId)
       return this
     }
     this.courses = this.courses.map((course) => {
